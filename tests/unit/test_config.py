@@ -156,7 +156,7 @@ class TestBuildConfig:
 
         graph_llm = config_dict["graph_store"]["llm"]
         assert graph_llm["provider"] == "gemini"
-        assert graph_llm["config"]["model"] == "gemini-2.5-flash-lite"
+        assert graph_llm["config"]["model"] == "gemini-3.5-flash-lite"
         assert graph_llm["config"]["api_key"] == "test-gemini-key"
 
     def test_graph_llm_gemini_model_override(self):
@@ -182,7 +182,7 @@ class TestBuildConfig:
 
         graph_llm = config_dict["graph_store"]["llm"]
         assert graph_llm["provider"] == "gemini"
-        assert graph_llm["config"]["model"] == "gemini-2.5-flash-lite"
+        assert graph_llm["config"]["model"] == "gemini-3.5-flash-lite"
         assert "api_key" not in graph_llm["config"]
 
     def test_graph_llm_gemini_split_defaults(self):
@@ -197,13 +197,13 @@ class TestBuildConfig:
         # Config dict uses "gemini" for pydantic validation
         graph_llm = config_dict["graph_store"]["llm"]
         assert graph_llm["provider"] == "gemini"
-        assert graph_llm["config"]["model"] == "gemini-2.5-flash-lite"
+        assert graph_llm["config"]["model"] == "gemini-3.5-flash-lite"
         assert graph_llm["config"]["api_key"] == "test-gemini-key"
 
         # Split config returned separately for post-creation LLM swap
         assert split_config is not None
         assert split_config["extraction_provider"] == "gemini"
-        assert split_config["extraction_model"] == "gemini-2.5-flash-lite"
+        assert split_config["extraction_model"] == "gemini-3.5-flash-lite"
         assert split_config["extraction_api_key"] == "test-gemini-key"
         assert split_config["contradiction_provider"] == "anthropic"
         assert split_config["contradiction_model"] == "claude-opus-4-6"
@@ -255,7 +255,7 @@ class TestBuildConfig:
         config_dict, *_ = self._build_with_env(env)
         llm = config_dict["llm"]
         assert llm["provider"] == "gemini"
-        assert llm["config"]["model"] == "gemini-2.5-flash-lite"
+        assert llm["config"]["model"] == "gemini-3.5-flash-lite"
         assert llm["config"]["api_key"] == "test-gemini-key"
 
     def test_gemini_llm_provider_model_override(self):

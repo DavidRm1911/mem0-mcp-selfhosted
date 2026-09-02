@@ -63,7 +63,9 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
     _llm_model_defaults = {
         "anthropic": "claude-opus-4-6",
         "ollama": "qwen3:14b",
-        "gemini": "gemini-2.5-flash-lite",
+        # gemini-2.5-flash-lite returns 404 "no longer available to new users"
+        # as of 2026-09-02 — confirmed live against the real API.
+        "gemini": "gemini-3.5-flash-lite",
     }
     llm_model = env("MEM0_LLM_MODEL", _llm_model_defaults[llm_provider])
     llm_max_tokens = int(env("MEM0_LLM_MAX_TOKENS", "16384"))
@@ -197,7 +199,7 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             # Use mem0ai's built-in GeminiLLM provider
             # Default to flash-lite (not the main Claude model) when no explicit model set
             graph_llm_config["model"] = env(
-                "MEM0_GRAPH_LLM_MODEL", "gemini-2.5-flash-lite"
+                "MEM0_GRAPH_LLM_MODEL", "gemini-3.5-flash-lite"
             )
             google_api_key = opt_env("GOOGLE_API_KEY")
             if google_api_key:
@@ -207,7 +209,7 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             # Use "gemini" as config provider (passes pydantic validation), then
             # server.py swaps the graph LLM to the SplitModelGraphLLM after creation.
             graph_llm_config["model"] = env(
-                "MEM0_GRAPH_LLM_MODEL", "gemini-2.5-flash-lite"
+                "MEM0_GRAPH_LLM_MODEL", "gemini-3.5-flash-lite"
             )
             google_api_key = opt_env("GOOGLE_API_KEY")
             if google_api_key:
@@ -255,7 +257,7 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
     # for server.py to swap the graph LLM after Memory creation.
     split_config: dict[str, Any] | None = None
     if enable_graph and graph_llm_provider_raw == "gemini_split":
-        extraction_model = env("MEM0_GRAPH_LLM_MODEL", "gemini-2.5-flash-lite")
+        extraction_model = env("MEM0_GRAPH_LLM_MODEL", "gemini-3.5-flash-lite")
         google_api_key = opt_env("GOOGLE_API_KEY")
         contradiction_provider = env(
             "MEM0_GRAPH_CONTRADICTION_LLM_PROVIDER", "anthropic"
