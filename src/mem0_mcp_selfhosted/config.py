@@ -45,7 +45,7 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
 
     # --- Top-level provider default (cascades to LLM and graph LLM) ---
     _provider_default = env("MEM0_PROVIDER", "anthropic")
-    _supported_llm_providers = ("anthropic", "ollama")
+    _supported_llm_providers = ("anthropic", "ollama", "gemini")
     if _provider_default not in _supported_llm_providers:
         raise ValueError(
             f"Unsupported MEM0_PROVIDER={_provider_default!r}. "
@@ -60,7 +60,11 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             f"Supported: {list(_supported_llm_providers)}"
         )
 
-    _llm_model_defaults = {"anthropic": "claude-opus-4-6", "ollama": "qwen3:14b"}
+    _llm_model_defaults = {
+        "anthropic": "claude-opus-4-6",
+        "ollama": "qwen3:14b",
+        "gemini": "gemini-2.5-flash-lite",
+    }
     llm_model = env("MEM0_LLM_MODEL", _llm_model_defaults[llm_provider])
     llm_max_tokens = int(env("MEM0_LLM_MAX_TOKENS", "16384"))
 
@@ -71,6 +75,12 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
             llm_config["api_key"] = token
     elif llm_provider == "ollama":
         llm_config["ollama_base_url"] = _resolve_ollama_url("MEM0_LLM_URL")
+    elif llm_provider == "gemini":
+        # Reuses mem0ai's built-in GeminiLLM provider — same one already used
+        # for MEM0_GRAPH_LLM_PROVIDER=gemini, just wired to the main LLM slot.
+        google_api_key = opt_env("GOOGLE_API_KEY") or opt_env("GEMINI_API_KEY")
+        if google_api_key:
+            llm_config["api_key"] = google_api_key
 
     # --- Embedder ---
     embed_provider = env("MEM0_EMBED_PROVIDER", "ollama")

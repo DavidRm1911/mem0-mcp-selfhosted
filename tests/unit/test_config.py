@@ -13,8 +13,9 @@ class TestBuildConfig:
         """Build config with the given env vars, mocking resolve_token."""
         # Clear env vars that could leak from integration tests or CLI
         leak_keys = [k for k in os.environ if k.startswith("MEM0_")]
-        if "GOOGLE_API_KEY" in os.environ:
-            leak_keys.append("GOOGLE_API_KEY")
+        for leak_var in ("GOOGLE_API_KEY", "GEMINI_API_KEY"):
+            if leak_var in os.environ:
+                leak_keys.append(leak_var)
         with patch.dict("os.environ", env, clear=False) as patched_env:
             for k in leak_keys:
                 if k not in env:
@@ -248,17 +249,49 @@ class TestBuildConfig:
         config_dict, *_ = self._build_with_env(env)
         assert config_dict["llm"]["provider"] == "ollama"
 
+    def test_gemini_llm_provider(self):
+        """MEM0_LLM_PROVIDER=gemini sets the main LLM provider to gemini, with its own default model and API key."""
+        env = {"MEM0_LLM_PROVIDER": "gemini", "GOOGLE_API_KEY": "test-gemini-key"}
+        config_dict, *_ = self._build_with_env(env)
+        llm = config_dict["llm"]
+        assert llm["provider"] == "gemini"
+        assert llm["config"]["model"] == "gemini-2.5-flash-lite"
+        assert llm["config"]["api_key"] == "test-gemini-key"
+
+    def test_gemini_llm_provider_model_override(self):
+        """Main Gemini LLM model can be overridden via MEM0_LLM_MODEL."""
+        env = {
+            "MEM0_LLM_PROVIDER": "gemini",
+            "MEM0_LLM_MODEL": "gemini-2.0-flash",
+            "GOOGLE_API_KEY": "test-gemini-key",
+        }
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["config"]["model"] == "gemini-2.0-flash"
+
+    def test_gemini_llm_provider_accepts_gemini_api_key_env(self):
+        """GEMINI_API_KEY is accepted as a fallback for GOOGLE_API_KEY on the main LLM slot."""
+        env = {"MEM0_LLM_PROVIDER": "gemini", "GEMINI_API_KEY": "test-gemini-key-2"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["config"]["api_key"] == "test-gemini-key-2"
+
+    def test_gemini_llm_provider_no_api_key(self):
+        """Main Gemini LLM config is produced even without an API key set (mem0ai/SDK resolves auth itself)."""
+        env = {"MEM0_LLM_PROVIDER": "gemini"}
+        config_dict, *_ = self._build_with_env(env)
+        assert config_dict["llm"]["provider"] == "gemini"
+        assert "api_key" not in config_dict["llm"]["config"]
+
     def test_unsupported_llm_provider_raises(self):
         """Unsupported MEM0_LLM_PROVIDER raises ValueError."""
         leak_keys = [k for k in os.environ if k.startswith("MEM0_")]
-        env = {"MEM0_LLM_PROVIDER": "gemini"}
+        env = {"MEM0_LLM_PROVIDER": "openai"}
         with patch.dict("os.environ", env, clear=False) as patched_env:
             for k in leak_keys:
                 if k not in env:
                     patched_env.pop(k, None)
             with patch("mem0_mcp_selfhosted.config.resolve_token", return_value="sk-test"):
                 from mem0_mcp_selfhosted.config import build_config
-                with pytest.raises(ValueError, match="Unsupported MEM0_LLM_PROVIDER='gemini'"):
+                with pytest.raises(ValueError, match="Unsupported MEM0_LLM_PROVIDER='openai'"):
                     build_config()
 
     def test_anthropic_config_has_api_key_and_max_tokens(self):
