@@ -43,12 +43,26 @@ OAT_HEADERS = {
 # --- Structured Output Schemas ---
 # Two schemas for the two call types in mem0ai's pipeline.
 
+# mem0ai >= 2.x additive extraction parses {"memory": [{"id", "text", ...}]};
+# the old {"facts": [...]} shape made every add silently extract nothing.
 FACT_RETRIEVAL_SCHEMA = {
     "type": "object",
     "properties": {
-        "facts": {"type": "array", "items": {"type": "string"}},
+        "memory": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "text": {"type": "string"},
+                    "linked_memory_ids": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["id", "text"],
+                "additionalProperties": False,
+            },
+        },
     },
-    "required": ["facts"],
+    "required": ["memory"],
     "additionalProperties": False,
 }
 

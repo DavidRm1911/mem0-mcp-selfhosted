@@ -123,6 +123,12 @@ class TestSchemaDetection:
         result = AnthropicOATLLM._select_schema(llm, messages)
         assert result == MEMORY_UPDATE_SCHEMA
 
+    def test_fact_schema_matches_mem0_parser(self):
+        """mem0ai 2.x reads extracted_memories from ["memory"][i]["text"]."""
+        assert FACT_RETRIEVAL_SCHEMA["required"] == ["memory"]
+        item = FACT_RETRIEVAL_SCHEMA["properties"]["memory"]["items"]
+        assert "text" in item["required"]
+
 
 # --- Helpers for token refresh tests ---
 
