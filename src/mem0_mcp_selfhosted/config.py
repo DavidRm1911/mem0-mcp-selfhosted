@@ -149,6 +149,17 @@ def build_config() -> tuple[dict[str, Any], list[ProviderInfo], dict[str, Any] |
     if history_db_path:
         config_dict["history_db_path"] = history_db_path
 
+    # mem0ai 2.x's extraction prompt targets personal chit-chat and drops
+    # third-person work notes ("Project X uses Y") written by coding agents.
+    config_dict["custom_instructions"] = env(
+        "MEM0_CUSTOM_INSTRUCTIONS",
+        "Every message is a deliberate note the user wants remembered: a shared "
+        "work knowledge base for coding agents. Extract project facts, clients, "
+        "decisions, architecture, commands, paths, URLs and lessons learned, even "
+        "when written in third person or as terse notes. Keep names, versions, "
+        "dates and paths verbatim, and keep the original language.",
+    )
+
     # --- Graph Store (conditional) ---
     enable_graph = bool_env("MEM0_ENABLE_GRAPH")
     graph_llm_provider_raw: str | None = None  # set inside block, used for provider registration
